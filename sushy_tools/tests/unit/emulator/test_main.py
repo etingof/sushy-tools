@@ -22,7 +22,7 @@ from sushy_tools.emulator import main
 class EmulatorTestCase(base.BaseTestCase):
 
     def setUp(self):
-        main.driver = None
+        main.Driver = None
         self.app = main.app.test_client()
 
         super(EmulatorTestCase, self).setUp()

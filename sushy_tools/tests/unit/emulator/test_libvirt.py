@@ -27,7 +27,7 @@ class EmulatorTestCase(base.BaseTestCase):
         self.app = main.app.test_client()
 
         # This enables libvirt driver
-        main.driver = None
+        main.Driver = None
         self.test_driver = LibvirtDriver()
         super(EmulatorTestCase, self).setUp()
 
