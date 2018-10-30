@@ -11,6 +11,7 @@
 #    under the License.
 
 import libvirt
+import uuid
 
 from oslotest import base
 from six.moves import mock
@@ -30,6 +31,40 @@ class EmulatorTestCase(base.BaseTestCase):
         main.driver = None
         self.test_driver = LibvirtDriver()
         super(EmulatorTestCase, self).setUp()
+
+    @mock.patch('libvirt.open', autospec=True)
+    def test__get_domain_by_name(self, libvirt_mock):
+        domain_id = 'name'
+        domain_info = 'domain'
+
+        conn_mock = libvirt_mock.return_value
+        lookupByName_mock = conn_mock.lookupByName
+        lookupByName_mock.return_value = domain_info
+        lookupByUUID_mock = conn_mock.lookupByUUID
+
+        domain = self.test_driver._get_domain(domain_id)
+
+        self.assertEqual(domain_info, domain)
+        lookupByName_mock.assert_called_once_with(domain_id)
+        self.assertFalse(lookupByUUID_mock.called)
+
+    @mock.patch('libvirt.open', autospec=True)
+    def test__get_domain_by_uuid(self, libvirt_mock):
+        domain_id = uuid.UUID('b9fbc4f5-2c81-4c80-97ea-272621fb7360')
+        domain_info = 'domain'
+
+        conn_mock = libvirt_mock.return_value
+        lookupByName_mock = conn_mock.lookupByName
+        lookupByName_mock.side_effect = libvirt.libvirtError(
+            'domain not found')
+        lookupByUUID_mock = conn_mock.lookupByUUID
+        lookupByUUID_mock.return_value = domain_info
+
+        domain = self.test_driver._get_domain(str(domain_id))
+
+        self.assertEqual(domain_info, domain)
+        lookupByName_mock.assert_called_once_with(str(domain_id))
+        lookupByUUID_mock.assert_called_once_with(domain_id.bytes)
 
     def test_root_resource(self):
         response = self.app.get('/redfish/v1/')
