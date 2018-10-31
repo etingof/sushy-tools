@@ -85,9 +85,11 @@ class OpenStackDriver(AbstractDriver):
     def systems(self):
         """Return available computer systems
 
-        :returns: list of computer systems names.
+        :returns: list of dictionaries each containing the `name` and `uuid`
+            keys representing computer system names
         """
-        return [server.id for server in self._cc.list_servers()]
+        return [dict(uuid=server.id, name=server.name)
+                for server in self._cc.list_servers()]
 
     def uuid(self, identity):
         """Get computer system UUID by name
@@ -98,6 +100,16 @@ class OpenStackDriver(AbstractDriver):
         """
         instance = self._get_instance(identity)
         return instance.id
+
+    def name(self, identity):
+        """Get computer system name by name
+
+        :param identity: OpenStack instance name or ID
+
+        :returns: computer system name
+        """
+        instance = self._get_instance(identity)
+        return instance.name
 
     def get_power_state(self, identity):
         """Get computer system power state

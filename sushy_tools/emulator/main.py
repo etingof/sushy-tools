@@ -31,12 +31,14 @@ app = flask.Flask(__name__)
 app.url_map.strict_slashes = False
 
 driver = None
+ADVERTISE_SYSTEM_UUID = os.environ.get('$SUSHY_EMULATOR_ADVERTISE_SYSTEM_UUID')
 
 
 def init_virt_driver(decorated_func):
     @functools.wraps(decorated_func)
     def decorator(*args, **kwargs):
         global driver
+        global ADVERTISE_SYSTEM_UUID
 
         if driver is None:
 
@@ -102,7 +104,8 @@ def system_collection_resource():
 
     return flask.render_template(
         'system_collection.json', system_count=len(systems),
-        systems=systems)
+        systems=[system['uuid'] if ADVERTISE_SYSTEM_UUID else system['name']
+                 for system in systems])
 
 
 @app.route('/redfish/v1/Systems/<identity>', methods=['GET', 'PATCH'])
@@ -114,7 +117,9 @@ def system_resource(identity):
         app.logger.debug('Serving resources for system "%s"', identity)
 
         return flask.render_template(
-            'system.json', identity=identity,
+            'system.json',
+            identity=identity,
+            name=driver.name(identity),
             uuid=driver.uuid(identity),
             power_state=driver.get_power_state(identity),
             total_memory_gb=driver.get_total_memory(identity),
@@ -268,6 +273,12 @@ def parse_args():
                                help='OpenStack cloud name. Can also be set '
                                     'via environment variable '
                                     '$OS_CLOUD')
+    backend_group.add_argument('--advertise-system-uuid',
+                               action='store_true',
+                               help='Advertise computer systems by UUID '
+                                    'rather than by names. Can also be set '
+                                    'via environment variable '
+                                    '$SUSHY_EMULATOR_ADVERTISE_SYSTEM_UUID=1')
     backend_group.add_argument('--libvirt-uri',
                                type=str,
                                default='',
@@ -281,6 +292,7 @@ def parse_args():
 
 def main():
     global driver
+    global ADVERTISE_SYSTEM_UUID
 
     args = parse_args()
 
@@ -297,6 +309,9 @@ def main():
             return 1
 
         driver = libvirtdriver.LibvirtDriver(args.libvirt_uri)
+
+    if args.advertise_system_uuid is not None:
+        ADVERTISE_SYSTEM_UUID = args.advertise_system_uuid
 
     app.logger.debug('Running with %s', driver.driver)
 

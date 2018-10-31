@@ -38,8 +38,10 @@ class EmulatorTestCase(base.BaseTestCase):
         self.assertTrue(response.json)
 
     def test_collection_resource(self, nova_mock):
-        server0 = mock.Mock(id='host0')
-        server1 = mock.Mock(id='host1')
+        server0 = mock.Mock(id='b9fbc4f5-2c81-4c80-97ea-272621fb7360')
+        server0.name = 'host0'
+        server1 = mock.Mock(id='b9fbc4f5-2c81-4c80-97ea-272621fb7361')
+        server1.name = 'host1'
         nova_mock.return_value.list_servers.return_value = [server0, server1]
 
         response = self.app.get('/redfish/v1/Systems')

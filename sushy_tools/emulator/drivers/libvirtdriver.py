@@ -127,10 +127,12 @@ class LibvirtDriver(AbstractDriver):
     def systems(self):
         """Return available computer systems
 
-        :returns: list of computer systems names.
+        :returns: list of dictionaries each containing the `name` and `uuid`
+            keys representing computer system names
         """
         with libvirt_open(self._uri, readonly=True) as conn:
-            return conn.listDefinedDomains()
+            return [dict(uuid=self.uuid(domain), name=domain)
+                    for domain in conn.listDefinedDomains()]
 
     def uuid(self, identity):
         """Get computer system UUID
@@ -144,6 +146,16 @@ class LibvirtDriver(AbstractDriver):
         """
         domain = self._get_domain(identity, readonly=True)
         return domain.UUIDString()
+
+    def name(self, identity):
+        """Get computer system name by name
+
+        :param identity: libvirt domain name or UUID
+
+        :returns: computer system name
+        """
+        domain = self._get_domain(identity, readonly=True)
+        return domain.name()
 
     def get_power_state(self, identity):
         """Get computer system power state

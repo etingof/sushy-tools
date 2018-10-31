@@ -1,7 +1,7 @@
 {
     "@odata.type": "#ComputerSystem.v1_1_0.ComputerSystem",
     "Id": "{{ identity }}",
-    "Name": "{{ identity }}",
+    "Name": "{{ name }}",
     "UUID": "{{ uuid }}",
     "Status": {
         "State": "Enabled",

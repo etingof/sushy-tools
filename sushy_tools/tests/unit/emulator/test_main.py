@@ -27,6 +27,37 @@ class EmulatorTestCase(base.BaseTestCase):
 
         super(EmulatorTestCase, self).setUp()
 
+    def test_systems_by_name(self, driver_mock):
+        type(driver_mock).systems = mock.PropertyMock(return_value=[
+            {'name': 'host0', 'uuid': 'b9fbc4f5-2c81-4c80-97ea-272621fb7360'},
+            {'name': 'host1', 'uuid': 'b9fbc4f5-2c81-4c80-97ea-272621fb7361'}])
+
+        response = self.app.get('/redfish/v1/Systems')
+
+        self.assertEqual('200 OK', response.status)
+        self.assertEqual(2, response.json['Members@odata.count'])
+        self.assertEqual(
+            [{'@odata.id': '/redfish/v1/Systems/host0'},
+             {'@odata.id': '/redfish/v1/Systems/host1'}],
+            response.json['Members'])
+
+    @mock.patch.object(main, 'ADVERTISE_SYSTEM_UUID', '1')
+    def test_systems_by_uuid(self, driver_mock):
+        type(driver_mock).systems = mock.PropertyMock(return_value=[
+            {'name': 'host0', 'uuid': 'b9fbc4f5-2c81-4c80-97ea-272621fb7360'},
+            {'name': 'host1', 'uuid': 'b9fbc4f5-2c81-4c80-97ea-272621fb7361'}])
+
+        response = self.app.get('/redfish/v1/Systems')
+
+        self.assertEqual('200 OK', response.status)
+        self.assertEqual(2, response.json['Members@odata.count'])
+        self.assertEqual(
+            [{'@odata.id': '/redfish/v1/Systems/'
+                           'b9fbc4f5-2c81-4c80-97ea-272621fb7360'},
+             {'@odata.id': '/redfish/v1/Systems/'
+                           'b9fbc4f5-2c81-4c80-97ea-272621fb7361'}],
+            response.json['Members'])
+
     def test_bios(self, driver_mock):
         driver_mock.get_bios.return_value = {"attribute 1": "value 1",
                                              "attribute 2": "value 2"}
